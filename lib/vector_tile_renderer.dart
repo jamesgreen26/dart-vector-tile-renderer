@@ -10,6 +10,8 @@ export 'src/model/tile_factory.dart';
 export 'src/model/tile_model.dart';
 export 'src/model/transform/tile_clip.dart';
 export 'src/model/transform/tile_translate.dart';
+export 'src/pipeline/tile_pipeline.dart'
+    show TilePipeline, PipelineContext, PipelineStage;
 export 'src/renderer.dart';
 export 'src/symbols/symbols.dart';
 export 'src/symbols/text_painter.dart';
