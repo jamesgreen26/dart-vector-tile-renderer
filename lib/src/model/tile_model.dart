@@ -46,9 +46,9 @@ class BoundedPath {
 class TileFeature {
   final TileFeatureType type;
   final Map<String, dynamic> properties;
-  List<TilePoint>? _modelPoints;
-  List<TileLine>? _modelLines;
-  List<TilePolygon>? _modelPolygons;
+  List<TilePoint>? modelPoints;
+  List<TileLine>? modelLines;
+  List<TilePolygon>? modelPolygons;
   late List<Offset> _points;
   late List<BoundedPath> _paths;
   BoundedPath? _compoundPath;
@@ -59,21 +59,21 @@ class TileFeature {
       required List<TilePoint>? points,
       required List<TileLine>? lines,
       required List<TilePolygon>? polygons})
-      : _modelPoints = points,
-        _modelLines = lines,
-        _modelPolygons = polygons;
+      : modelPoints = points,
+        modelLines = lines,
+        modelPolygons = polygons;
 
   List<Offset> get points {
     if (type != TileFeatureType.point) {
       throw StateError('Feature does not have points');
     }
-    final modelPoints = _modelPoints;
-    if (modelPoints != null) {
+    final mPoints = modelPoints;
+    if (mPoints != null) {
       final uiGeometry = UiGeometry();
-      _points = modelPoints
+      _points = mPoints
           .map((e) => uiGeometry.createPoint(e))
           .toList(growable: false);
-      _modelPoints = null;
+      modelPoints = null;
     }
     return _points;
   }
@@ -105,23 +105,23 @@ class TileFeature {
     if (type == TileFeatureType.point) {
       throw StateError('Cannot get paths from a point feature');
     }
-    final modelLines = _modelLines;
-    if (modelLines != null) {
+    final mLines = modelLines;
+    if (mLines != null) {
       assert(type == TileFeatureType.linestring);
       final uiGeometry = UiGeometry();
-      _paths = modelLines
+      _paths = mLines
           .map((e) => BoundedPath(uiGeometry.createLine(e)))
           .toList(growable: false);
-      _modelLines = null;
+      modelLines = null;
     }
-    final modelPolygons = _modelPolygons;
-    if (modelPolygons != null) {
+    final mPolygons = modelPolygons;
+    if (mPolygons != null) {
       assert(type == TileFeatureType.polygon);
       final uiGeometry = UiGeometry();
-      _paths = modelPolygons
+      _paths = mPolygons
           .map((e) => BoundedPath(uiGeometry.createPolygon(e)))
           .toList(growable: false);
-      _modelPolygons = null;
+      modelPolygons = null;
     }
     return _paths;
   }

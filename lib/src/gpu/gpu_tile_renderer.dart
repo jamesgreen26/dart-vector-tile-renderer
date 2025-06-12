@@ -1,8 +1,12 @@
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart' as m;
 import 'package:flutter_gpu/gpu.dart' as gpu;
+import 'package:vector_tile_renderer/src/gpu/draw_queue.dart';
+import 'package:vector_tile_renderer/src/gpu/line_to_triangles.dart';
+import 'package:vector_tile_renderer/src/gpu/math/triangle.dart';
 import 'package:vector_tile_renderer/src/themes/theme_layers.dart';
 import 'package:vector_math/vector_math.dart' as vm;
 
@@ -34,6 +38,25 @@ class GpuTileRenderer {
       required Tileset tile}) {
     final effectiveTheme = theme.atZoom(zoom);
 
+    final drawQueue = DrawQueue();
+
+    for (var layer in effectiveTheme.layers) {
+      if (layer is DefaultLayer) {
+        for (var tileLayer in layer.selector.select(tile, zoom.truncate())) {
+          for (var feature in tileLayer.features) {
+            if (feature.modelPolygons != null) {}
+            final lines = feature.modelLines;
+            if (lines != null) {
+              final triangles =
+                  lines.map((it) => getTriangles(it, 4096)).flattenedToList;
+              drawQueue.addTriangles(triangles, m.Colors.black.vector4);
+            }
+            if (feature.modelPoints != null) {}
+          }
+        }
+      }
+    }
+
     final texture = gpu.gpuContext.createTexture(
         gpu.StorageMode.devicePrivate, clip.width.toInt(), clip.height.toInt());
     final renderTarget = gpu.RenderTarget.singleColor(gpu.ColorAttachment(
@@ -47,26 +70,20 @@ class GpuTileRenderer {
     final frag = shaderLibrary['SimpleFragment']!;
     final pipeline = gpu.gpuContext.createRenderPipeline(vert, frag);
 
-    final points = [
-      ui.Offset(-0.5, -0.5),
-      ui.Offset(0.5, -0.5),
-      ui.Offset(0.0, 0.5),
-      ui.Offset(0.0, 0.0)
-    ];
-    final vertices = Float32List.fromList(
-        points.expand((o) => [o.dx, o.dy]).toList(growable: false));
-    final verticesDeviceBuffer = gpu.gpuContext
-        .createDeviceBufferWithCopy(ByteData.sublistView(vertices));
+    final verticesDeviceBuffer = gpu.gpuContext.createDeviceBufferWithCopy(
+        ByteData.sublistView(
+            Float32List.fromList(drawQueue.coloredVertices)));
 
     renderPass.bindPipeline(pipeline);
-    renderPass.setPrimitiveType(gpu.PrimitiveType.lineStrip);
+    renderPass.setPrimitiveType(gpu.PrimitiveType.triangle);
 
     final verticesView = gpu.BufferView(
       verticesDeviceBuffer,
       offsetInBytes: 0,
       lengthInBytes: verticesDeviceBuffer.sizeInBytes,
     );
-    renderPass.bindVertexBuffer(verticesView, points.length);
+    renderPass.bindVertexBuffer(
+        verticesView, drawQueue.vertexCount);
     renderPass.draw();
 
     commandBuffer.submit();
@@ -77,7 +94,7 @@ class GpuTileRenderer {
   vm.Vector4 _getBackgroundColor(ThemeLayer baseLayer, double zoom) {
     if (baseLayer is BackgroundLayer) {
       final color = baseLayer.fillColor.evaluate(EvaluationContext(
-              () => {}, TileFeatureType.background, logger,
+          () => {}, TileFeatureType.background, logger,
           zoom: zoom, zoomScaleFactor: 1.0, hasImage: (_) => false));
       if (color != null) {
         return color.vector4;
