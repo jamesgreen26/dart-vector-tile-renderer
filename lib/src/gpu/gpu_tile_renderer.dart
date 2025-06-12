@@ -40,6 +40,10 @@ class GpuTileRenderer {
 
     final drawQueue = DrawQueue();
 
+    final evaluationContext = EvaluationContext(
+            () => {}, TileFeatureType.none, logger,
+        zoom: zoom, zoomScaleFactor: zoomScaleFactor, hasImage: (_) => false);
+
     for (var layer in effectiveTheme.layers) {
       if (layer is DefaultLayer) {
         for (var tileLayer in layer.selector.select(tile, zoom.truncate())) {
@@ -47,9 +51,10 @@ class GpuTileRenderer {
             if (feature.modelPolygons != null) {}
             final lines = feature.modelLines;
             if (lines != null) {
+              final color = layer.style.linePaint?.evaluate(evaluationContext)?.color.vector4;
               final triangles =
                   lines.map((it) => getTriangles(it, 4096)).flattenedToList;
-              drawQueue.addTriangles(triangles, m.Colors.black.vector4);
+              drawQueue.addTriangles(triangles, color ?? m.Colors.black.vector4);
             }
             if (feature.modelPoints != null) {}
           }
