@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -40,7 +41,7 @@ class GpuTileRenderer {
     final effectiveTheme = theme.atZoom(zoom);
 
     final tileSpace = ui.Rect.fromLTWH(0, 0, tileSize.toDouble(), tileSize.toDouble());
-    final drawSpace = ui.Rect.fromLTWH(0, 0, tileSpace.width * zoomScaleFactor, tileSpace.height * zoomScaleFactor);
+    final drawSpace = ui.Rect.fromLTWH(0, 0, min(tileSpace.width * zoomScaleFactor, 16384), min(tileSpace.height * zoomScaleFactor, 16384));
 
     final drawQueue = DrawQueue();
 
