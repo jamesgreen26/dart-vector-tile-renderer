@@ -23,8 +23,13 @@ Picture _renderPicture({
   canvas.clipRect(rect);
   canvas.scale(scale.toDouble(), scale.toDouble());
 
-  VectorMapRenderer(theme: theme).render(canvas, TileSource(tileset: tileset),
-      zoomScaleFactor: scale, zoom: zoom, rotation: 0.0);
+  VectorMapRenderer(theme: theme).render(
+      canvas: canvas,
+      tile: TileSource(tileset: tileset),
+      zoomScaleFactor: scale,
+      zoom: zoom,
+      rotation: 0.0
+  );
 
   return recorder.endRecording();
 }

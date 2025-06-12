@@ -14,13 +14,11 @@ import 'shaders.dart';
 /// this class is stateful, designed to be reused for rendering a tile
 /// multiple times.
 ///
-class TileRenderer {
+class GpuTileRenderer {
   final Theme theme;
-  final Tileset tileset;
 
-  TileRenderer({
-    required this.theme,
-    required this.tileset
+  GpuTileRenderer({
+    required this.theme
   });
 
   void render({
@@ -28,7 +26,8 @@ class TileRenderer {
     required ui.Rect clip,
     required double zoomScaleFactor,
     required double zoom,
-    required double rotation
+    required double rotation,
+    required Tileset tile
   }) {
 
 

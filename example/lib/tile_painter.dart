@@ -24,13 +24,23 @@ class TilePainter extends CustomPainter {
         canvas.drawImage(image!, Offset.zero, Paint());
       }
     } else if (options.renderMode == RenderMode.vector) {
-      VectorMapRenderer(theme: theme).render(canvas, TileSource(tileset: tileset),
+      VectorMapRenderer(theme: theme).render(
+          canvas: canvas,
+          tile: TileSource(tileset: tileset),
           clip: Rect.fromLTWH(0, 0, size.width, size.height),
           zoomScaleFactor: pow(2, options.scale).toDouble(),
           zoom: options.zoom,
-          rotation: 0.0);
+          rotation: 0.0
+      );
     } if (options.renderMode == RenderMode.shader) {
-
+      GpuTileRenderer(theme: theme).render(
+          canvas: canvas,
+          tile: tileset,
+          clip: Rect.fromLTWH(0, 0, size.width, size.height),
+          zoomScaleFactor: pow(2, options.scale).toDouble(),
+          zoom: options.zoom,
+          rotation: 0.0
+      );
     }
     canvas.restore();
   }

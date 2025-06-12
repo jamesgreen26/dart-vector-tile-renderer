@@ -36,8 +36,13 @@ class ImageRenderer {
       final canvas = Canvas(recorder, rect);
       canvas.clipRect(rect);
       canvas.scale(scale.toDouble(), scale.toDouble());
-      VectorMapRenderer(theme: theme, logger: logger).render(canvas, tile,
-          zoomScaleFactor: zoomScaleFactor, zoom: zoom, rotation: 0.0);
+      VectorMapRenderer(theme: theme, logger: logger).render(
+          canvas: canvas,
+          tile: tile,
+          zoomScaleFactor: zoomScaleFactor,
+          zoom: zoom,
+          rotation: 0.0
+      );
       return recorder.endRecording().toImage(size.floor(), size.floor());
     });
   }

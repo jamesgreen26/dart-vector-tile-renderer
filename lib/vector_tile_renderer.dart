@@ -2,7 +2,7 @@ library vector_tile_renderer;
 
 export 'package:vector_tile/vector_tile.dart' show VectorTile;
 
-export 'src/gpu/tile_renderer.dart';
+export 'src/gpu/gpu_tile_renderer.dart';
 export 'src/image_renderer.dart';
 export 'src/image_to_png.dart';
 export 'src/logger.dart';

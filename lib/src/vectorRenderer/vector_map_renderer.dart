@@ -35,8 +35,10 @@ class VectorMapRenderer {
   /// [tile] the tile to render
   /// [clip] the optional clip to constrain tile rendering, used to limit drawing
   ///        so that a portion of a tile can be rendered to a canvas
-  void render(Canvas canvas, TileSource tile,
-      {Rect? clip,
+  void render({
+      required Canvas canvas,
+      required TileSource tile,
+      Rect? clip,
       required double zoomScaleFactor,
       required double zoom,
       required double rotation}) {
