@@ -11,6 +11,7 @@ import 'package:vector_tile_renderer/src/themes/theme_layers.dart';
 import 'package:vector_math/vector_math.dart' as vm;
 
 import '../../vector_tile_renderer.dart';
+import '../constants.dart';
 import '../themes/expression/expression.dart';
 import '../themes/theme.dart';
 import '../tileset.dart';
@@ -38,6 +39,9 @@ class GpuTileRenderer {
       required Tileset tile}) {
     final effectiveTheme = theme.atZoom(zoom);
 
+    final tileSpace = ui.Rect.fromLTWH(0, 0, tileSize.toDouble(), tileSize.toDouble());
+    final drawSpace = ui.Rect.fromLTWH(0, 0, tileSpace.width * zoomScaleFactor, tileSpace.height * zoomScaleFactor);
+
     final drawQueue = DrawQueue();
 
     final evaluationContext = EvaluationContext(
@@ -63,7 +67,7 @@ class GpuTileRenderer {
     }
 
     final texture = gpu.gpuContext.createTexture(
-        gpu.StorageMode.devicePrivate, clip.width.toInt(), clip.height.toInt());
+        gpu.StorageMode.devicePrivate, drawSpace.width.toInt(), drawSpace.height.toInt());
     final renderTarget = gpu.RenderTarget.singleColor(gpu.ColorAttachment(
         texture: texture,
         clearValue: _getBackgroundColor(effectiveTheme.layers.first, zoom)));
@@ -93,7 +97,7 @@ class GpuTileRenderer {
 
     commandBuffer.submit();
     final image = texture.asImage();
-    canvas.drawImage(image, ui.Offset.zero, ui.Paint());
+    canvas.drawImageRect(image, drawSpace, tileSpace, ui.Paint());
   }
 
   vm.Vector4 _getBackgroundColor(ThemeLayer baseLayer, double zoom) {
