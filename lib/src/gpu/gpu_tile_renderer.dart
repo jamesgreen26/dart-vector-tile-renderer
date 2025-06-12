@@ -10,6 +10,7 @@ import 'package:vector_tile_renderer/src/gpu/line_to_triangles.dart';
 import 'package:vector_tile_renderer/src/gpu/math/triangle.dart';
 import 'package:vector_tile_renderer/src/themes/theme_layers.dart';
 import 'package:vector_math/vector_math.dart' as vm;
+import 'package:dart_earcut/dart_earcut.dart';
 
 import '../../vector_tile_renderer.dart';
 import '../constants.dart';
@@ -31,13 +32,41 @@ class GpuTileRenderer {
   GpuTileRenderer({required this.theme, Logger? logger})
       : logger = logger ?? const Logger.noop();
 
+  List<Triangle> triangulatePath(List<Point> points) {
+
+    final flatList = <double>[];
+    for (final p in points) {
+      flatList.addAll([p.x.toDouble(), p.y.toDouble()]);
+    }
+
+    final indices = Earcut.triangulateRaw(flatList);
+
+    final triangles = <Triangle>[];
+    for (int i = 0; i < indices.length; i += 3) {
+      final a = points[indices[i]];
+      final b = points[indices[i + 1]];
+      final c = points[indices[i + 2]];
+
+      triangles.add(
+        Triangle(
+          vm.Vector2(a.x / 2048 - 1, 1 - a.y / 2048),
+          vm.Vector2(b.x / 2048 - 1, 1 - b.y / 2048),
+          vm.Vector2(c.x / 2048 - 1, 1 - c.y / 2048),
+        ),
+      );
+
+    }
+
+    return triangles;
+  }
+
   void render(
       {required ui.Canvas canvas,
-      required ui.Rect clip,
-      required double zoomScaleFactor,
-      required double zoom,
-      required double rotation,
-      required Tileset tile}) {
+        required ui.Rect clip,
+        required double zoomScaleFactor,
+        required double zoom,
+        required double rotation,
+        required Tileset tile}) {
     final effectiveTheme = theme.atZoom(zoom);
 
     final tileSpace = ui.Rect.fromLTWH(0, 0, tileSize.toDouble(), tileSize.toDouble());
@@ -53,7 +82,12 @@ class GpuTileRenderer {
       if (layer is DefaultLayer) {
         for (var tileLayer in layer.selector.select(tile, zoom.truncate())) {
           for (var feature in tileLayer.features) {
-            if (feature.modelPolygons != null) {}
+            final polygons = feature.modelPolygons;
+            if (polygons != null) {
+              final triangles = polygons.map((it) => triangulatePath(it.rings.map((it2) => it2.points).flattenedToList));
+              final color = layer.style.fillPaint?.evaluate(evaluationContext)?.color.vector4;
+              drawQueue.addTriangles(triangles.flattenedToList, color ?? m.Colors.green.vector4);
+            }
             final lines = feature.modelLines;
             if (lines != null) {
               final color = layer.style.linePaint?.evaluate(evaluationContext)?.color.vector4;
@@ -104,7 +138,7 @@ class GpuTileRenderer {
   vm.Vector4 _getBackgroundColor(ThemeLayer baseLayer, double zoom) {
     if (baseLayer is BackgroundLayer) {
       final color = baseLayer.fillColor.evaluate(EvaluationContext(
-          () => {}, TileFeatureType.background, logger,
+              () => {}, TileFeatureType.background, logger,
           zoom: zoom, zoomScaleFactor: 1.0, hasImage: (_) => false));
       if (color != null) {
         return color.vector4;
@@ -116,3 +150,4 @@ class GpuTileRenderer {
   /// Must call to release resources when done.
   void dispose() {}
 }
+
