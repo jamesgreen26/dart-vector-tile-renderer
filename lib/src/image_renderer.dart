@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'constants.dart';
 import 'logger.dart';
 import 'profiling.dart';
-import 'vectorRenderer/renderer.dart';
+import 'vectorRenderer/vector_map_renderer.dart';
 import 'themes/theme.dart';
 import 'tile_source.dart';
 
@@ -36,7 +36,7 @@ class ImageRenderer {
       final canvas = Canvas(recorder, rect);
       canvas.clipRect(rect);
       canvas.scale(scale.toDouble(), scale.toDouble());
-      Renderer(theme: theme, logger: logger).render(canvas, tile,
+      VectorMapRenderer(theme: theme, logger: logger).render(canvas, tile,
           zoomScaleFactor: zoomScaleFactor, zoom: zoom, rotation: 0.0);
       return recorder.endRecording().toImage(size.floor(), size.floor());
     });

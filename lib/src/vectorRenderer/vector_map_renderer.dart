@@ -1,5 +1,7 @@
 import 'dart:ui';
 
+import 'package:vector_tile_renderer/src/vectorRenderer/theme_layer_renderer.dart';
+
 import '../constants.dart';
 import '../context.dart';
 import '../features/feature_renderer.dart';
@@ -10,12 +12,12 @@ import '../symbols/text_painter.dart';
 import '../themes/theme.dart';
 import '../tile_source.dart';
 
-class Renderer {
+class VectorMapRenderer {
   final Theme theme;
   final Logger logger;
   final FeatureDispatcher featureRenderer;
   final TextPainterProvider painterProvider;
-  Renderer(
+  VectorMapRenderer(
       {required this.theme,
       this.painterProvider = const DefaultTextPainterProvider(),
       Logger? logger})
@@ -60,9 +62,10 @@ class Renderer {
           optimizations: optimizations,
           textPainterProvider: painterProvider);
       final effectiveTheme = theme.atZoom(zoom);
+      final layerRenderer = ThemeLayerRenderer();
       for (final themeLayer in effectiveTheme.layers) {
         logger.log(() => 'rendering theme layer ${themeLayer.id}');
-        themeLayer.render(context);
+        layerRenderer.render(context, themeLayer);
       }
       canvas.restore();
     });
