@@ -7,10 +7,9 @@ import 'package:flutter/material.dart' as m;
 import 'package:flutter_gpu/gpu.dart' as gpu;
 import 'package:vector_tile_renderer/src/gpu/draw_queue.dart';
 import 'package:vector_tile_renderer/src/gpu/line_to_triangles.dart';
-import 'package:vector_tile_renderer/src/gpu/math/triangle.dart';
 import 'package:vector_tile_renderer/src/themes/theme_layers.dart';
 import 'package:vector_math/vector_math.dart' as vm;
-import 'package:dart_earcut/dart_earcut.dart';
+
 
 import '../../vector_tile_renderer.dart';
 import '../constants.dart';
@@ -18,6 +17,7 @@ import '../themes/expression/expression.dart';
 import '../themes/theme.dart';
 import '../tileset.dart';
 import 'color_extension.dart';
+import 'earcut_polygons.dart';
 import 'shaders.dart';
 
 /// Experimental: renders tiles using flutter_gpu
@@ -32,33 +32,7 @@ class GpuTileRenderer {
   GpuTileRenderer({required this.theme, Logger? logger})
       : logger = logger ?? const Logger.noop();
 
-  List<Triangle> triangulatePath(List<Point> points) {
 
-    final flatList = <double>[];
-    for (final p in points) {
-      flatList.addAll([p.x.toDouble(), p.y.toDouble()]);
-    }
-
-    final indices = Earcut.triangulateRaw(flatList);
-
-    final triangles = <Triangle>[];
-    for (int i = 0; i < indices.length; i += 3) {
-      final a = points[indices[i]];
-      final b = points[indices[i + 1]];
-      final c = points[indices[i + 2]];
-
-      triangles.add(
-        Triangle(
-          vm.Vector2(a.x / 2048 - 1, 1 - a.y / 2048),
-          vm.Vector2(b.x / 2048 - 1, 1 - b.y / 2048),
-          vm.Vector2(c.x / 2048 - 1, 1 - c.y / 2048),
-        ),
-      );
-
-    }
-
-    return triangles;
-  }
 
   void render(
       {required ui.Canvas canvas,
@@ -84,7 +58,7 @@ class GpuTileRenderer {
           for (var feature in tileLayer.features) {
             final polygons = feature.modelPolygons;
             if (polygons != null) {
-              final triangles = polygons.map((it) => triangulatePath(it.rings.map((it2) => it2.points).flattenedToList));
+              final triangles = polygons.map((it) => earcutPolygons(it.rings.map((it2) => it2.points).flattenedToList));
               final color = layer.style.fillPaint?.evaluate(evaluationContext)?.color.vector4;
               drawQueue.addTriangles(triangles.flattenedToList, color ?? m.Colors.green.vector4);
             }
