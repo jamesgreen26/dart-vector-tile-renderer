@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'constants.dart';
 import 'logger.dart';
 import 'profiling.dart';
-import 'renderer.dart';
+import 'vectorRenderer/renderer.dart';
 import 'themes/theme.dart';
 import 'tile_source.dart';
 

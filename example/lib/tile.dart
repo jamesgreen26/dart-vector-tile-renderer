@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:vector_tile_renderer/vector_tile_renderer.dart';
 import 'dart:ui' as ui;
 
-enum RenderMode { vector, raster }
+enum RenderMode { vector, raster, shader }
 
 class TileOptions {
   final Size size;

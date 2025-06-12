@@ -1,14 +1,14 @@
 import 'dart:ui';
 
-import 'constants.dart';
-import 'context.dart';
-import 'features/feature_renderer.dart';
-import 'logger.dart';
-import 'optimizations.dart';
-import 'profiling.dart';
-import 'symbols/text_painter.dart';
-import 'themes/theme.dart';
-import 'tile_source.dart';
+import '../constants.dart';
+import '../context.dart';
+import '../features/feature_renderer.dart';
+import '../logger.dart';
+import '../optimizations.dart';
+import '../profiling.dart';
+import '../symbols/text_painter.dart';
+import '../themes/theme.dart';
+import '../tile_source.dart';
 
 class Renderer {
   final Theme theme;

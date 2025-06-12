@@ -11,7 +11,7 @@ export 'src/model/tile_factory.dart';
 export 'src/model/tile_model.dart';
 export 'src/model/transform/tile_clip.dart';
 export 'src/model/transform/tile_translate.dart';
-export 'src/renderer.dart';
+export 'src/vectorRenderer/renderer.dart';
 export 'src/symbols/symbols.dart';
 export 'src/symbols/text_painter.dart';
 export 'src/themes/provided_themes.dart';

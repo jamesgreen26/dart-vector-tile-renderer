@@ -16,15 +16,27 @@ import 'shaders.dart';
 ///
 class TileRenderer {
   final Theme theme;
-  Tileset? tileset;
+  final Tileset tileset;
 
-  TileRenderer({required this.theme});
+  TileRenderer({
+    required this.theme,
+    required this.tileset
+  });
 
-  void render(ui.Canvas canvas, ui.Size size) {
-    final tileset = this.tileset ?? Tileset({});
+  void render({
+    required ui.Canvas canvas,
+    required ui.Rect clip,
+    required double zoomScaleFactor,
+    required double zoom,
+    required double rotation
+  }) {
+
+
+    final effectiveTheme = theme.atZoom(zoom);
+
 
     final texture = gpu.gpuContext.createTexture(
-        gpu.StorageMode.devicePrivate, size.width.toInt(), size.height.toInt());
+        gpu.StorageMode.devicePrivate, clip.width.toInt(), clip.height.toInt());
     final renderTarget = gpu.RenderTarget.singleColor(gpu.ColorAttachment(
         texture: texture, clearValue: m.Colors.lightBlue.vector4));
 
