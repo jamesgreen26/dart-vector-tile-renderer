@@ -7,9 +7,9 @@ import 'package:flutter/material.dart' as m;
 import 'package:flutter_gpu/gpu.dart' as gpu;
 import 'package:vector_tile_renderer/src/gpu/draw_queue.dart';
 import 'package:vector_tile_renderer/src/gpu/line_to_triangles.dart';
+import 'package:vector_tile_renderer/src/gpu/math/triangle.dart';
 import 'package:vector_tile_renderer/src/themes/theme_layers.dart';
 import 'package:vector_math/vector_math.dart' as vm;
-
 
 import '../../vector_tile_renderer.dart';
 import '../constants.dart';
@@ -31,8 +31,6 @@ class GpuTileRenderer {
 
   GpuTileRenderer({required this.theme, Logger? logger})
       : logger = logger ?? const Logger.noop();
-
-
 
   void render(
       {required ui.Canvas canvas,
@@ -112,7 +110,7 @@ class GpuTileRenderer {
   vm.Vector4 _getBackgroundColor(ThemeLayer baseLayer, double zoom) {
     if (baseLayer is BackgroundLayer) {
       final color = baseLayer.fillColor.evaluate(EvaluationContext(
-              () => {}, TileFeatureType.background, logger,
+          () => {}, TileFeatureType.background, logger,
           zoom: zoom, zoomScaleFactor: 1.0, hasImage: (_) => false));
       if (color != null) {
         return color.vector4;
@@ -124,4 +122,3 @@ class GpuTileRenderer {
   /// Must call to release resources when done.
   void dispose() {}
 }
-
