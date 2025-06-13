@@ -46,11 +46,11 @@ class BoundedPath {
 class TileFeature {
   final TileFeatureType type;
   final Map<String, dynamic> properties;
-  List<TilePoint>? modelPoints;
-  List<TileLine>? modelLines;
-  List<TilePolygon>? modelPolygons;
-  late List<Offset> _points;
-  late List<BoundedPath> _paths;
+  final List<TilePoint>? modelPoints;
+  final List<TileLine>? modelLines;
+  final List<TilePolygon>? modelPolygons;
+  List<Offset>? _points;
+  List<BoundedPath>? _paths;
   BoundedPath? _compoundPath;
 
   TileFeature(
@@ -67,15 +67,16 @@ class TileFeature {
     if (type != TileFeatureType.point) {
       throw StateError('Feature does not have points');
     }
+    var points1 = _points;
     final mPoints = modelPoints;
-    if (mPoints != null) {
+    if (points1 == null && mPoints != null) {
       final uiGeometry = UiGeometry();
-      _points = mPoints
+      points1 = mPoints
           .map((e) => uiGeometry.createPoint(e))
           .toList(growable: false);
-      modelPoints = null;
+      _points = points1;
     }
-    return _points;
+    return points1 ?? List.empty();
   }
 
   bool get hasPaths =>
@@ -106,24 +107,22 @@ class TileFeature {
       throw StateError('Cannot get paths from a point feature');
     }
     final mLines = modelLines;
-    if (mLines != null) {
+    final mPolygons = modelPolygons;
+
+    if (_paths == null && mLines != null) {
       assert(type == TileFeatureType.linestring);
       final uiGeometry = UiGeometry();
       _paths = mLines
           .map((e) => BoundedPath(uiGeometry.createLine(e)))
           .toList(growable: false);
-      modelLines = null;
-    }
-    final mPolygons = modelPolygons;
-    if (mPolygons != null) {
+    } else if (_paths == null && mPolygons != null) {
       assert(type == TileFeatureType.polygon);
       final uiGeometry = UiGeometry();
       _paths = mPolygons
           .map((e) => BoundedPath(uiGeometry.createPolygon(e)))
           .toList(growable: false);
-      modelPolygons = null;
     }
-    return _paths;
+    return _paths ?? List.empty();
   }
 }
 
