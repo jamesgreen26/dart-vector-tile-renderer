@@ -3,10 +3,10 @@ import 'package:vector_math/vector_math.dart' as vm;
 import '../model/geometry_model.dart';
 import 'math/triangle.dart';
 
-List<Triangle> getTriangles(TileLine line, int extent) {
+List<Triangle> getTriangles(TileLine line, int extent, double strokeWidth) {
   List<vm.Vector2> points = line.points.map((p) =>  vm.Vector2((-1 + 2 * p.x / extent), (1 - 2 * p.y / extent))).toList();
   if (points.isEmpty) return List.empty();
-  var width = 0.002;
+  var width = strokeWidth / extent;
 
   var deltas = getDeltas(points);
   var turnAmounts = getTurnAmounts(deltas);

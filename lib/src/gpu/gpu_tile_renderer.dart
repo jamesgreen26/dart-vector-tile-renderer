@@ -61,9 +61,11 @@ class GpuTileRenderer {
             }
             final lines = feature.modelLines;
             if (lines != null) {
-              final color = layer.style.linePaint?.evaluate(evaluationContext)?.color.vector4;
+              final linePaint = layer.style.linePaint?.evaluate(evaluationContext);
+              final color = linePaint?.color.vector4;
+              final strokeWidth = linePaint?.strokeWidth;
               final triangles =
-                  lines.map((it) => getTriangles(it, 4096)).flattenedToList;
+                  lines.map((it) => getTriangles(it, 4096, strokeWidth ?? 8.0)).flattenedToList;
               drawQueue.addTriangles(triangles, color ?? m.Colors.black.vector4);
             }
             if (feature.modelPoints != null) {}
