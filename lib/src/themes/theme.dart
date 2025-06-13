@@ -58,4 +58,6 @@ abstract class ThemeLayer {
       {required this.minzoom, required this.maxzoom, required this.metadata});
 
   String? get tileSource;
+
+  void render(Context context);
 }

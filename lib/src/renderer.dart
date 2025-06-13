@@ -1,26 +1,24 @@
 import 'dart:ui';
 
-import 'package:vector_tile_renderer/src/vectorRenderer/theme_layer_renderer.dart';
+import 'constants.dart';
+import 'context.dart';
+import 'features/feature_renderer.dart';
+import 'logger.dart';
+import 'optimizations.dart';
+import 'profiling.dart';
+import 'symbols/text_painter.dart';
+import 'themes/theme.dart';
+import 'tile_source.dart';
 
-import '../constants.dart';
-import '../context.dart';
-import '../features/feature_renderer.dart';
-import '../logger.dart';
-import '../optimizations.dart';
-import '../profiling.dart';
-import '../symbols/text_painter.dart';
-import '../themes/theme.dart';
-import '../tile_source.dart';
-
-class VectorMapRenderer {
+class Renderer {
   final Theme theme;
   final Logger logger;
   final FeatureDispatcher featureRenderer;
   final TextPainterProvider painterProvider;
-  VectorMapRenderer(
+  Renderer(
       {required this.theme,
-      this.painterProvider = const DefaultTextPainterProvider(),
-      Logger? logger})
+        this.painterProvider = const DefaultTextPainterProvider(),
+        Logger? logger})
       : logger = logger ?? const Logger.noop(),
         featureRenderer = FeatureDispatcher(logger ?? const Logger.noop());
 
@@ -35,16 +33,14 @@ class VectorMapRenderer {
   /// [tile] the tile to render
   /// [clip] the optional clip to constrain tile rendering, used to limit drawing
   ///        so that a portion of a tile can be rendered to a canvas
-  void render({
-      required Canvas canvas,
-      required TileSource tile,
-      Rect? clip,
-      required double zoomScaleFactor,
-      required double zoom,
-      required double rotation}) {
+  void render(Canvas canvas, TileSource tile,
+      {Rect? clip,
+        required double zoomScaleFactor,
+        required double zoom,
+        required double rotation}) {
     profileSync('Render', () {
       final tileSpace =
-          Rect.fromLTWH(0, 0, tileSize.toDouble(), tileSize.toDouble());
+      Rect.fromLTWH(0, 0, tileSize.toDouble(), tileSize.toDouble());
       canvas.save();
       canvas.clipRect(tileSpace);
       final tileClip = clip ?? tileSpace;
@@ -64,10 +60,9 @@ class VectorMapRenderer {
           optimizations: optimizations,
           textPainterProvider: painterProvider);
       final effectiveTheme = theme.atZoom(zoom);
-      final layerRenderer = ThemeLayerRenderer();
       for (final themeLayer in effectiveTheme.layers) {
         logger.log(() => 'rendering theme layer ${themeLayer.id}');
-        layerRenderer.render(context, themeLayer);
+        themeLayer.render(context);
       }
       canvas.restore();
     });

@@ -24,9 +24,9 @@ class TilePainter extends CustomPainter {
         canvas.drawImage(image!, Offset.zero, Paint());
       }
     } else if (options.renderMode == RenderMode.vector) {
-      VectorMapRenderer(theme: theme).render(
-          canvas: canvas,
-          tile: TileSource(tileset: tileset),
+      Renderer(theme: theme).render(
+          canvas,
+          TileSource(tileset: tileset),
           clip: Rect.fromLTWH(0, 0, size.width, size.height),
           zoomScaleFactor: pow(2, options.scale).toDouble(),
           zoom: options.zoom,
