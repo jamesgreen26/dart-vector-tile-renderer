@@ -25,12 +25,12 @@ import 'shaders.dart';
 /// multiple times.
 ///
 class GpuTileRenderer {
-  final Theme theme;
+  late final Theme theme;
   final Logger logger;
   final drawQueue = DrawQueue();
   double previousZoom = double.nan;
 
-  GpuTileRenderer({required this.theme, Logger? logger})
+  GpuTileRenderer({Logger? logger})
       : logger = logger ?? const Logger.noop();
 
   void render(
