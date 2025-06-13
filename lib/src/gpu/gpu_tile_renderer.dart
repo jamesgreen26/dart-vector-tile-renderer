@@ -94,33 +94,32 @@ class GpuTileRenderer {
       if (layer is DefaultLayer) {
         for (var tileLayer in layer.selector.select(tile, zoom.truncate())) {
           for (var feature in tileLayer.features) {
+
             final polygons = feature.modelPolygons;
-            if (polygons != null) {
+            final lines = feature.modelLines;
+            final points = feature.modelPoints;
+
+            final linePaint = layer.style.linePaint?.evaluate(evaluationContext);
+            final fillPaint = layer.style.fillPaint?.evaluate(evaluationContext);
+
+            if (polygons != null && fillPaint != null) {
               final triangles = polygons.map((it) =>
                   earcutPolygons(it.rings
                       .map((it2) => it2.points)
                       .flattenedToList));
-              final color = layer.style.fillPaint
-                  ?.evaluate(evaluationContext)
-                  ?.color
-                  .vector4;
-              drawQueue.addTriangles(
-                  triangles.flattenedToList, color ?? m.Colors.green.vector4);
+              final color = fillPaint.color.vector4;
+              drawQueue.addTriangles(triangles.flattenedToList, color);
             }
-            final lines = feature.modelLines;
-            if (lines != null) {
-              final linePaint = layer.style.linePaint?.evaluate(
-                  evaluationContext);
-              final color = linePaint?.color.vector4;
-              final strokeWidth = linePaint?.strokeWidth;
-              final triangles =
-                  lines
-                      .map((it) => getTriangles(it, 4096, strokeWidth ?? 8.0))
+            if (lines != null && linePaint != null) {
+              final color = linePaint.color.vector4;
+              final strokeWidth = linePaint.strokeWidth;
+              final triangles = lines
+                      .map((it) => getTriangles(it, 4096, strokeWidth ?? 8))
                       .flattenedToList;
               drawQueue.addTriangles(
-                  triangles, color ?? m.Colors.black.vector4);
+                  triangles, color);
             }
-            if (feature.modelPoints != null) {}
+            if (points != null) {}
           }
         }
       }
