@@ -7,7 +7,6 @@ import 'package:flutter/material.dart' as m;
 import 'package:flutter_gpu/gpu.dart' as gpu;
 import 'package:vector_tile_renderer/src/gpu/draw_queue.dart';
 import 'package:vector_tile_renderer/src/gpu/line_to_triangles.dart';
-import 'package:vector_tile_renderer/src/gpu/math/triangle.dart';
 import 'package:vector_tile_renderer/src/themes/theme_layers.dart';
 import 'package:vector_math/vector_math.dart' as vm;
 
