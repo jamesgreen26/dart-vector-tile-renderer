@@ -2,33 +2,49 @@ import 'package:vector_math/vector_math.dart' hide Triangle;
 
 import 'math/triangle.dart';
 
+import 'dart:typed_data';
+
 class DrawQueue {
-  final coloredVertices = <double>[];
+  Float32List coloredVertices = Float32List(0); //must be initialized
   int vertexCount = 0;
+  int _capacity = 0;
+
+  DrawQueue({int initialCapacity = 1024}) {
+    _capacity = initialCapacity;
+    coloredVertices = Float32List(_capacity * 6);
+  }
 
   void addTriangles(List<Triangle> triangles, Vector4 color) {
+    int required = triangles.length * 3 * 6;
+
+    if (vertexCount * 6 + required > coloredVertices.length) {
+      _growBuffer((vertexCount * 6 + required) * 2);
+    }
+
+    int i = vertexCount * 6;
+
     for (var triangle in triangles) {
-      coloredVertices.addAll([
-        triangle.a.x,
-        triangle.a.y,
-        color.r,
-        color.g,
-        color.b,
-        color.a,
-        triangle.b.x,
-        triangle.b.y,
-        color.r,
-        color.g,
-        color.b,
-        color.a,
-        triangle.c.x,
-        triangle.c.y,
-        color.r,
-        color.g,
-        color.b,
-        color.a
-      ]);
+      i = _writeVertex(coloredVertices, i, triangle.a, color);
+      i = _writeVertex(coloredVertices, i, triangle.b, color);
+      i = _writeVertex(coloredVertices, i, triangle.c, color);
       vertexCount += 3;
     }
+  }
+
+  int _writeVertex(Float32List buffer, int index, Vector2 pos, Vector4 color) {
+    buffer[index++] = pos.x;
+    buffer[index++] = pos.y;
+    buffer[index++] = color.r;
+    buffer[index++] = color.g;
+    buffer[index++] = color.b;
+    buffer[index++] = color.a;
+    return index;
+  }
+
+  void _growBuffer(int newLength) {
+    final newBuffer = Float32List(newLength);
+    newBuffer.setRange(0, coloredVertices.length, coloredVertices);
+    coloredVertices = newBuffer;
+    _capacity = newLength ~/ 6;
   }
 }
