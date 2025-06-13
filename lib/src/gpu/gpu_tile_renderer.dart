@@ -27,7 +27,7 @@ import 'shaders.dart';
 class GpuTileRenderer {
   late final Theme theme;
   final Logger logger;
-  final drawQueue = DrawQueue();
+  DrawQueue drawQueue = DrawQueue();
   double previousZoom = double.nan;
 
   GpuTileRenderer({Logger? logger})
@@ -46,6 +46,7 @@ class GpuTileRenderer {
     final drawSpace = ui.Rect.fromLTWH(0, 0, min(tileSpace.width * zoomScaleFactor, 16384), min(tileSpace.height * zoomScaleFactor, 16384));
 
     if (!drawQueue.hasData || zoom != previousZoom) {
+      drawQueue = DrawQueue();
       previousZoom = zoom;
       computeDrawQueue(zoom, zoomScaleFactor, effectiveTheme, tile);
     }
