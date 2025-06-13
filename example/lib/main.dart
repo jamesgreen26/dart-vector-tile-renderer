@@ -1,4 +1,6 @@
+import 'package:example/tile.dart' as tile;
 import 'package:flutter/material.dart';
+import 'package:vector_tile_renderer/vector_tile_renderer.dart';
 
 import 'tile.dart';
 
@@ -48,6 +50,9 @@ class _MyHomePageState extends State<MyHomePage> {
       clipSize: 0,
       renderMode: RenderMode.vector);
 
+  late GpuTileRenderer _gpuTileRenderer;
+
+
   @override
   void initState() {
     super.initState();
@@ -61,6 +66,7 @@ class _MyHomePageState extends State<MyHomePage> {
     _clipOffsetY =
         TextEditingController(text: '${options.clipOffsetY.toInt()}');
     _clipSize = TextEditingController(text: '${options.clipSize.toInt()}');
+    _gpuTileRenderer = GpuTileRenderer();
   }
 
   @override
@@ -96,7 +102,7 @@ class _MyHomePageState extends State<MyHomePage> {
               child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: [Tile(options: options)]))
+                  children: [tile.Tile(options: options, gpuRenderer: _gpuTileRenderer)]))
         ]));
   }
 

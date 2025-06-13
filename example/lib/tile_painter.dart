@@ -12,8 +12,7 @@ class TilePainter extends CustomPainter {
   final ui.Image? image;
   final GpuTileRenderer gpuRenderer;
 
-  TilePainter(this.tileset, this.theme, {required this.options, this.image})
-      : gpuRenderer = GpuTileRenderer(theme: theme);
+  TilePainter(this.tileset, this.theme, {required this.options, this.image, required this.gpuRenderer});
 
   @override
   void paint(Canvas canvas, Size size) {

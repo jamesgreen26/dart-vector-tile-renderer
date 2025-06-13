@@ -54,8 +54,9 @@ class TileOptions {
 
 class Tile extends StatefulWidget {
   final TileOptions options;
+  final GpuTileRenderer gpuRenderer;
 
-  const Tile({Key? key, required this.options}) : super(key: key);
+  const Tile({Key? key, required this.options, required this.gpuRenderer}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
@@ -73,6 +74,7 @@ class _TileState extends State<Tile> {
   void initState() {
     super.initState();
     _loadTileset();
+    widget.gpuRenderer.theme = theme;
   }
 
   @override
@@ -102,7 +104,10 @@ class _TileState extends State<Tile> {
         child: CustomPaint(
           size: widget.options.size,
           painter: TilePainter(tileset!, theme,
-              options: widget.options, image: image),
+              options: widget.options,
+              image: image,
+              gpuRenderer: widget.gpuRenderer
+          ),
         ));
   }
 
