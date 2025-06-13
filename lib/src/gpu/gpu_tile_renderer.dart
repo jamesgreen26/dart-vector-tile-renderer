@@ -27,6 +27,8 @@ import 'shaders.dart';
 class GpuTileRenderer {
   final Theme theme;
   final Logger logger;
+  final drawQueue = DrawQueue();
+  double previousZoom = double.nan;
 
   GpuTileRenderer({required this.theme, Logger? logger})
       : logger = logger ?? const Logger.noop();
@@ -43,35 +45,9 @@ class GpuTileRenderer {
     final tileSpace = ui.Rect.fromLTWH(0, 0, tileSize.toDouble(), tileSize.toDouble());
     final drawSpace = ui.Rect.fromLTWH(0, 0, min(tileSpace.width * zoomScaleFactor, 16384), min(tileSpace.height * zoomScaleFactor, 16384));
 
-    final drawQueue = DrawQueue();
-
-    final evaluationContext = EvaluationContext(
-            () => {}, TileFeatureType.none, logger,
-        zoom: zoom, zoomScaleFactor: zoomScaleFactor, hasImage: (_) => false);
-
-    for (var layer in effectiveTheme.layers) {
-      if (layer is DefaultLayer) {
-        for (var tileLayer in layer.selector.select(tile, zoom.truncate())) {
-          for (var feature in tileLayer.features) {
-            final polygons = feature.modelPolygons;
-            if (polygons != null) {
-              final triangles = polygons.map((it) => earcutPolygons(it.rings.map((it2) => it2.points).flattenedToList));
-              final color = layer.style.fillPaint?.evaluate(evaluationContext)?.color.vector4;
-              drawQueue.addTriangles(triangles.flattenedToList, color ?? m.Colors.green.vector4);
-            }
-            final lines = feature.modelLines;
-            if (lines != null) {
-              final linePaint = layer.style.linePaint?.evaluate(evaluationContext);
-              final color = linePaint?.color.vector4;
-              final strokeWidth = linePaint?.strokeWidth;
-              final triangles =
-                  lines.map((it) => getTriangles(it, 4096, strokeWidth ?? 8.0)).flattenedToList;
-              drawQueue.addTriangles(triangles, color ?? m.Colors.black.vector4);
-            }
-            if (feature.modelPoints != null) {}
-          }
-        }
-      }
+    if (!drawQueue.hasData || zoom != previousZoom) {
+      previousZoom = zoom;
+      computeDrawQueue(zoom, zoomScaleFactor, effectiveTheme, tile);
     }
 
     final texture = gpu.gpuContext.createTexture(
@@ -106,6 +82,48 @@ class GpuTileRenderer {
     commandBuffer.submit();
     final image = texture.asImage();
     canvas.drawImageRect(image, drawSpace, tileSpace, ui.Paint());
+  }
+
+  void computeDrawQueue(double zoom, double zoomScaleFactor, Theme effectiveTheme, Tileset tile) {
+    final evaluationContext = EvaluationContext(
+            () => {}, TileFeatureType.none, logger,
+        zoom: zoom, zoomScaleFactor: zoomScaleFactor, hasImage: (_) => false);
+
+    for (var layer in effectiveTheme.layers) {
+      if (layer is DefaultLayer) {
+        for (var tileLayer in layer.selector.select(tile, zoom.truncate())) {
+          for (var feature in tileLayer.features) {
+            final polygons = feature.modelPolygons;
+            if (polygons != null) {
+              final triangles = polygons.map((it) =>
+                  earcutPolygons(it.rings
+                      .map((it2) => it2.points)
+                      .flattenedToList));
+              final color = layer.style.fillPaint
+                  ?.evaluate(evaluationContext)
+                  ?.color
+                  .vector4;
+              drawQueue.addTriangles(
+                  triangles.flattenedToList, color ?? m.Colors.green.vector4);
+            }
+            final lines = feature.modelLines;
+            if (lines != null) {
+              final linePaint = layer.style.linePaint?.evaluate(
+                  evaluationContext);
+              final color = linePaint?.color.vector4;
+              final strokeWidth = linePaint?.strokeWidth;
+              final triangles =
+                  lines
+                      .map((it) => getTriangles(it, 4096, strokeWidth ?? 8.0))
+                      .flattenedToList;
+              drawQueue.addTriangles(
+                  triangles, color ?? m.Colors.black.vector4);
+            }
+            if (feature.modelPoints != null) {}
+          }
+        }
+      }
+    }
   }
 
   vm.Vector4 _getBackgroundColor(ThemeLayer baseLayer, double zoom) {

@@ -8,13 +8,17 @@ class DrawQueue {
   Float32List coloredVertices = Float32List(0); //must be initialized
   int vertexCount = 0;
   int _capacity = 0;
+  bool _hasData = false;
 
   DrawQueue({int initialCapacity = 1024}) {
     _capacity = initialCapacity;
     coloredVertices = Float32List(_capacity * 6);
   }
 
+  bool get hasData => _hasData;
+
   void addTriangles(List<Triangle> triangles, Vector4 color) {
+    _hasData = true;
     int required = triangles.length * 3 * 6;
 
     if (vertexCount * 6 + required > coloredVertices.length) {

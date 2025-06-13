@@ -10,7 +10,10 @@ class TilePainter extends CustomPainter {
   final Theme theme;
   final TileOptions options;
   final ui.Image? image;
-  TilePainter(this.tileset, this.theme, {required this.options, this.image});
+  final GpuTileRenderer gpuRenderer;
+
+  TilePainter(this.tileset, this.theme, {required this.options, this.image})
+      : gpuRenderer = GpuTileRenderer(theme: theme);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -24,23 +27,20 @@ class TilePainter extends CustomPainter {
         canvas.drawImage(image!, Offset.zero, Paint());
       }
     } else if (options.renderMode == RenderMode.vector) {
-      Renderer(theme: theme).render(
-          canvas,
-          TileSource(tileset: tileset),
+      Renderer(theme: theme).render(canvas, TileSource(tileset: tileset),
           clip: Rect.fromLTWH(0, 0, size.width, size.height),
           zoomScaleFactor: pow(2, options.scale).toDouble(),
           zoom: options.zoom,
-          rotation: 0.0
-      );
-    } if (options.renderMode == RenderMode.shader) {
-      GpuTileRenderer(theme: theme).render(
+          rotation: 0.0);
+    }
+    if (options.renderMode == RenderMode.shader) {
+      gpuRenderer.render(
           canvas: canvas,
           tile: tileset,
           clip: Rect.fromLTWH(0, 0, size.width, size.height),
           zoomScaleFactor: pow(2, options.scale).toDouble(),
           zoom: options.zoom,
-          rotation: 0.0
-      );
+          rotation: 0.0);
     }
     canvas.restore();
   }
