@@ -34,7 +34,6 @@ out vec3 v_viewvector;
 out vec2 v_texture_coords;
 out vec4 v_color;
 
-out float v_length;
 out float cumulative_length;
 
 vec2 getPoint(int i) {
@@ -104,18 +103,5 @@ void main() {
   v_texture_coords = vec2(uv.x, uv.y * round);
   v_color = vec4(0,0,0,1);
 
-
-  vec2 curr = getPoint(int(position.x));
-  vec2 next = getPoint(int(position.z));
-
-  vec2 vec = next - curr;
-  float check = 0;
-  if (vec.x != 0) {
-    check = vec.x;
-  } else if (vec.y != 0) {
-    check = vec.y;
-  }
-
-  v_length = length(vec) * extent_scalings.extentScale;
   cumulative_length = getCumulativeLength() * extent_scalings.extentScale;
 } 

@@ -34,28 +34,39 @@ class SceneLineBuilder {
     final outlinePaint = style.outlinePaint?.evaluate(evaluationContext);
 
     final lineWidth = paint?.strokeWidth ?? outlinePaint?.strokeWidth;
-    final dashLengths = paint?.strokeDashPattern;
+    final dashLengths = [100.0, 100.0];
 
     if (lineWidth == null || paint == null || lineWidth <= 0) {
       return;
     }
     if (feature.feature.modelLines.isNotEmpty) {
-      addMesh(feature.feature.modelLines, lineWidth, feature.layer.extent, paint, dashLengths);
+      addMesh(feature.feature.modelLines, lineWidth, feature.layer.extent,
+          paint, dashLengths);
     }
 
     if (feature.feature.modelPolygons.isNotEmpty) {
       var outlines = feature.feature.modelPolygons
-          .expand((poly) => {poly.rings.map((ring) => TileLine(List.of(ring.points)..add(ring.points.first)))})
+          .expand((poly) => {
+                poly.rings.map((ring) =>
+                    TileLine(List.of(ring.points)..add(ring.points.first)))
+              })
           .flattened
           .toList();
       addMesh(outlines, lineWidth, feature.layer.extent, paint, dashLengths);
     }
   }
 
-  void addMesh(List<TileLine> lines, double lineWidth, int extent, PaintModel paint, List<double>? dashLengths) {
+  void addMesh(List<TileLine> lines, double lineWidth, int extent,
+      PaintModel paint, List<double>? dashLengths) {
     Geometry mainGeometry = LineGeometryBuilder().build(
-        lines, paint.lineCap ?? LineCap.DEFAULT, paint.lineJoin ?? LineJoin.DEFAULT, lineWidth, extent, dashLengths);
+        lines,
+        paint.lineCap ?? LineCap.DEFAULT,
+        paint.lineJoin ?? LineJoin.DEFAULT,
+        lineWidth,
+        extent,
+        dashLengths);
 
-    scene.addMesh(Mesh(mainGeometry, LineMaterial(paint.color.vector4, dashLengths)));
+    scene.addMesh(
+        Mesh(mainGeometry, LineMaterial(paint.color.vector4, dashLengths)));
   }
 }
