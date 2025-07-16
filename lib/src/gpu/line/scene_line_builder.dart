@@ -34,7 +34,7 @@ class SceneLineBuilder {
     final outlinePaint = style.outlinePaint?.evaluate(evaluationContext);
 
     final lineWidth = paint?.strokeWidth ?? outlinePaint?.strokeWidth;
-    final dashLengths = [100.0, 100.0];
+    final dashLengths = paint?.strokeDashPattern;
 
     if (lineWidth == null || paint == null || lineWidth <= 0) {
       return;
