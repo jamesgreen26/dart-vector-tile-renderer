@@ -1,5 +1,6 @@
 import 'package:flutter_scene/scene.dart';
 import 'package:vector_tile_renderer/src/gpu/color_extension.dart';
+import 'package:vector_tile_renderer/src/features/label_space.dart';
 
 import '../../../vector_tile_renderer.dart';
 import '../../context.dart';
@@ -16,10 +17,10 @@ class TextLayerVisitor {
 
   TextLayerVisitor(this.graph, this.context);
 
-  Future<void> addFeaturesWithCollisionDetection(
+  Future<void> addFeatures(
     Style style,
     Iterable<LayerFeature> features,
-    Context renderContext,
+    LabelSpace labelSpace,
   ) async {
     final List<Future<bool>> futures = [];
     for (var feature in features) {
@@ -69,7 +70,7 @@ class TextLayerVisitor {
         point.y,
         4096,
         graph,
-        renderContext.labelSpace,
+        labelSpace,
         context.zoom,
       ));
 
@@ -106,14 +107,14 @@ class TextLayerVisitor {
 
       final paint = style.textPaint?.evaluate(evaluationContext);
 
-      final textHalo = (style.textHalo?.evaluate(evaluationContext) ?? []).firstOrNull;
+      final textHalo =
+          (style.textHalo?.evaluate(evaluationContext) ?? []).firstOrNull;
 
       if (text == null ||
           text.isEmpty ||
           textSize == null ||
           alreadyAdded.contains(text) ||
-          paint == null
-      ) {
+          paint == null) {
         continue;
       }
 
@@ -122,7 +123,11 @@ class TextLayerVisitor {
             return it.points[it.points.length ~/ 2];
           }).firstOrNull;
 
-      if (point == null || point.x < 0 || point.x > 4096 || point.y < 0 || point.y > 4096) {
+      if (point == null ||
+          point.x < 0 ||
+          point.x > 4096 ||
+          point.y < 0 ||
+          point.y > 4096) {
         continue;
       }
 
@@ -131,18 +136,23 @@ class TextLayerVisitor {
       Future<void> haloFuture;
 
       if (textHalo == null) {
-        haloFuture = Future.sync((){});
+        haloFuture = Future.sync(() {});
       } else {
-        haloFuture = TextBuilder(_atlasManager)
-            .addText(text, textHalo.color.vector4, textSize.toInt() * 6, 1.5, point.x, point.y, 4096, graph);
+        haloFuture = TextBuilder(_atlasManager).addText(
+            text,
+            textHalo.color.vector4,
+            textSize.toInt() * 6,
+            1.5,
+            point.x,
+            point.y,
+            4096,
+            graph);
       }
 
-      futures.add(
-        haloFuture.then((_){
-          TextBuilder(_atlasManager)
-              .addText(text, paint.color.vector4, textSize.toInt() * 6, 1.0, point.x, point.y, 4096, graph);
-        })
-      );
+      futures.add(haloFuture.then((_) {
+        TextBuilder(_atlasManager).addText(text, paint.color.vector4,
+            textSize.toInt() * 6, 1.0, point.x, point.y, 4096, graph);
+      }));
     }
     await Future.wait(futures);
   }

@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/rendering.dart';
 import 'package:flutter_scene/scene.dart';
+import 'package:vector_tile_renderer/src/features/label_space.dart';
 import 'package:vector_math/vector_math.dart';
 import 'package:vector_tile_renderer/src/gpu/line/scene_line_builder.dart';
 import 'package:vector_tile_renderer/src/gpu/raster/raster_layer_builder.dart';
@@ -19,6 +20,7 @@ import 'polygon/scene_polygon_builder.dart';
 class SceneBuildingVisitor extends LayerVisitor {
   final SceneGraph graph;
   final VisitorContext context;
+  final labelSpace = LabelSpace(const Rect.fromLTRB(0, 0, 4096, 4096));
 
   SceneBuildingVisitor(this.graph, this.context);
 
@@ -31,17 +33,17 @@ class SceneBuildingVisitor extends LayerVisitor {
   @override
   void visitFeatures(VisitorContext context, ThemeLayerType layerType,
       Style style, Iterable<LayerFeature> features) {
-
     if (layerType == ThemeLayerType.symbol) {
       TextLayerVisitor(graph, context).addFeatures(style, features);
     }
   }
 
   @override
-  void visitBackground(VisitorContext context, Vector4 color) {
-  }
+  void visitBackground(VisitorContext context, Vector4 color) {}
 
   @override
-  void visitRasterLayer(VisitorContext context, RasterTile image, RasterPaintModel paintModel) {
+  void visitRasterLayer(
+      VisitorContext context, RasterTile image, RasterPaintModel paintModel) {
+    RasterLayerBuilder(graph, context).build(image, paintModel);
   }
 }

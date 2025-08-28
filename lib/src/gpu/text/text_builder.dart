@@ -2,6 +2,7 @@ import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui';
 
+import 'package:flutter_gpu/gpu.dart';
 import 'package:flutter_scene/scene.dart';
 import 'package:vector_math/vector_math.dart';
 import 'package:vector_tile_renderer/src/gpu/text/sdf/sdf_atlas_manager.dart';
@@ -50,13 +51,11 @@ class TextBuilder {
       return false;
     }
 
-    final boundingBox =
-        await _calculateBoundingBox(text, fontSize, x, y, canvasSize, zoom);
-    if (boundingBox == null) {
-      return false;
-    }
+    final (renderData, texture) =
+        await _prepare(text, fontSize, x, y, canvasSize, zoom);
 
-    final screenRect = _boundingBoxToRect(boundingBox, x, y, canvasSize);
+    final screenRect =
+        _boundingBoxToRect(renderData.boundingBox, x, y, canvasSize);
 
     if (!labelSpace.canOccupy(text, screenRect)) {
       return false;
@@ -64,61 +63,8 @@ class TextBuilder {
 
     labelSpace.occupy(text, screenRect);
 
-    await _addTextToScene(text, fontSize, x, y, canvasSize, scene, zoom);
+    _addTextToScene(renderData, scene, texture);
     return true;
-  }
-
-  Future<void> addText(String text, int fontSize, double x, double y,
-      int canvasSize, SceneGraph scene) async {
-    await _addTextToScene(text, fontSize, x, y, canvasSize, scene, 1.0);
-  }
-
-  Future<BoundingBox?> _calculateBoundingBox(
-    String text,
-    int fontSize,
-    double x,
-    double y,
-    int canvasSize,
-    double zoom,
-  ) async {
-    final atlas = await atlasManager.getAtlasForString(text, "Roboto Regular");
-    final boundingBox = BoundingBox();
-
-    final zoomAdjustedFontSize = fontSize * _getZoomScale(zoom);
-    final fontScale = zoomAdjustedFontSize / atlas.fontSize;
-    final canvasScale = 2 / canvasSize;
-    final scaling = fontScale * canvasScale;
-
-    double offsetX = 0.0;
-
-    for (final charCode in text.codeUnits) {
-      if (charCode > 255) {
-        continue;
-      }
-
-      final glyphMetrics = atlas.getGlyphMetrics(charCode);
-      if (glyphMetrics == null) {
-        continue;
-      }
-
-      offsetX -= glyphMetrics.glyphLeft * scaling;
-
-      final halfHeight = scaling * atlas.cellHeight / 2;
-      final halfWidth = scaling * atlas.cellWidth / 2;
-
-      final charMinX = offsetX - halfWidth;
-      final charMaxX = offsetX + halfWidth;
-      final charMinY = -halfHeight;
-      final charMaxY = halfHeight;
-
-      boundingBox.updateBounds(charMinX, charMaxX, charMinY, charMaxY);
-
-      final advance = scaling * glyphMetrics.glyphAdvance;
-      offsetX += advance;
-      offsetX += glyphMetrics.glyphLeft * scaling;
-    }
-
-    return boundingBox;
   }
 
   Rect _boundingBoxToRect(
@@ -126,29 +72,20 @@ class TextBuilder {
     final screenX = x;
     final screenY = y;
 
-    final left = screenX + boundingBox.minX * canvasSize / 2;
-    final right = screenX + boundingBox.maxX * canvasSize / 2;
-    final top = screenY + boundingBox.minY * canvasSize / 2;
-    final bottom = screenY + boundingBox.maxY * canvasSize / 2;
+    final left = screenX + boundingBox.minX;
+    final right = screenX + boundingBox.maxX;
+    final top = screenY + boundingBox.minY;
+    final bottom = screenY + boundingBox.maxY;
 
     return Rect.fromLTRB(left, top, right, bottom);
   }
 
-  double _getZoomScale(double zoom) {
-    // Scale text size based on zoom level
-    // At zoom 1.0, use normal size
-    // At higher zooms, increase text size
-    // At lower zooms, decrease text size
-    return (0.5 + (zoom * 0.5)).clamp(0.3, 2.0);
-  }
-
-  Future<void> _addTextToScene(
+  Future<(TextRenderData data, Texture texture)> _prepare(
     String text,
     int fontSize,
     double x,
     double y,
     int canvasSize,
-    SceneGraph scene,
     double zoom,
   ) async {
     final atlas = await atlasManager.getAtlasForString(text, "Roboto Regular");
@@ -157,7 +94,7 @@ class TextBuilder {
     final indices = <int>[];
     final boundingBox = BoundingBox();
 
-    final zoomAdjustedFontSize = fontSize * _getZoomScale(zoom);
+    final zoomAdjustedFontSize = fontSize;
     final fontScale = zoomAdjustedFontSize / atlas.fontSize;
     final canvasScale = 2 / canvasSize;
     final scaling = fontScale * canvasScale;
@@ -250,9 +187,21 @@ class TextBuilder {
       ]);
     }
 
+    return (
+      TextRenderData(
+          vertices: vertices,
+          indices: indices,
+          boundingBox: boundingBox,
+          anchorX: anchorX,
+          anchorY: anchorY),
+      atlas.texture
+    );
+  }
+
+  void _addTextToScene(TextRenderData data, SceneGraph scene, Texture texture) {
     final geom = TextGeometry(
-        ByteData.sublistView(Float32List.fromList(vertices)),
-        ByteData.sublistView(Uint16List.fromList(indices)),
+        ByteData.sublistView(Float32List.fromList(data.vertices)),
+        ByteData.sublistView(Uint16List.fromList(data.indices)),
         8);
 
     final mat = TextMaterial(atlas.texture, 0.08, 0.75 / expand, color);
@@ -268,4 +217,34 @@ class TextBuilder {
 
     scene.add(node);
   }
+}
+
+class TextRenderData {
+  final List<double> vertices;
+  final List<int> indices;
+  final BoundingBox boundingBox;
+  final double anchorX;
+  final double anchorY;
+
+  TextRenderData(
+      {required this.vertices,
+      required this.indices,
+      required this.boundingBox,
+      required this.anchorX,
+      required this.anchorY});
+}
+
+class TextRenderData {
+  final List<double> vertices;
+  final List<int> indices;
+  final BoundingBox boundingBox;
+  final double anchorX;
+  final double anchorY;
+
+  TextRenderData(
+      {required this.vertices,
+      required this.indices,
+      required this.boundingBox,
+      required this.anchorX,
+      required this.anchorY});
 }
