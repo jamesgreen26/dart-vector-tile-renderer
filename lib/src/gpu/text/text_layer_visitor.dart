@@ -2,6 +2,7 @@ import 'package:flutter_scene/scene.dart';
 import 'package:vector_tile_renderer/src/gpu/color_extension.dart';
 
 import '../../../vector_tile_renderer.dart';
+import '../../context.dart';
 import '../../themes/expression/expression.dart';
 import '../../themes/feature_resolver.dart';
 import '../../themes/style.dart';
@@ -14,6 +15,72 @@ class TextLayerVisitor {
   final Set<String> alreadyAdded = <String>{};
 
   TextLayerVisitor(this.graph, this.context);
+
+  Future<void> addFeaturesWithCollisionDetection(
+    Style style,
+    Iterable<LayerFeature> features,
+    Context renderContext,
+  ) async {
+    final List<Future<bool>> futures = [];
+    for (var feature in features) {
+      final symbolLayout = style.symbolLayout;
+      if (symbolLayout == null) {
+        print("null layout, skipping");
+        return;
+      }
+
+      final evaluationContext = EvaluationContext(
+          () => feature.feature.properties,
+          TileFeatureType.none,
+          context.logger,
+          zoom: context.zoom,
+          zoomScaleFactor: 1.0,
+          hasImage: (_) => false);
+
+      final text = symbolLayout.text?.text.evaluate(evaluationContext);
+
+      double? textSize =
+          style.symbolLayout?.text?.textSize.evaluate(evaluationContext);
+
+      final point = feature.feature.modelPoints.firstOrNull ??
+          feature.feature.modelLines.map((it) {
+            return it.points[it.points.length ~/ 2];
+          }).firstOrNull;
+
+      if (point == null) {
+        continue;
+      }
+
+      if (text == null ||
+          text.isEmpty ||
+          textSize == null ||
+          alreadyAdded.contains(text)) {
+        continue;
+      }
+
+      if (point.x < 0 || point.x > 4096 || point.y < 0 || point.y > 4096) {
+        continue;
+      }
+
+      futures.add(TextBuilder(_atlasManager).addTextWithCollisionDetection(
+        text,
+        textSize.toInt() * 6,
+        point.x,
+        point.y,
+        4096,
+        graph,
+        renderContext.labelSpace,
+        context.zoom,
+      ));
+
+      alreadyAdded.add(text);
+    }
+
+    final results = await Future.wait(futures);
+    final successCount = results.where((success) => success).length;
+    print(
+        "Successfully rendered $successCount out of ${results.length} text labels");
+  }
 
   Future<void> addFeatures(Style style, Iterable<LayerFeature> features) async {
     final List<Future<dynamic>> futures = [];
