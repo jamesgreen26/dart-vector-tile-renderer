@@ -49,17 +49,13 @@ class TextBuilder {
     LabelSpace labelSpace,
     double zoom,
   ) async {
-    if (!labelSpace.canAccept(text)) {
-      return false;
-    }
-
     final (renderData, texture) =
         await _prepare(text, fontSize, x, y, canvasSize, zoom);
 
     final screenRect =
         _boundingBoxToRect(renderData.boundingBox, x, y, canvasSize);
 
-    if (!labelSpace.canOccupy(text, screenRect)) {
+    if (!labelSpace.canOccupyDebug(text, screenRect)) {
       return false;
     }
 
@@ -74,12 +70,40 @@ class TextBuilder {
     final screenX = x;
     final screenY = y;
 
-    final left = screenX + boundingBox.minX;
-    final right = screenX + boundingBox.maxX;
-    final top = screenY + boundingBox.minY;
-    final bottom = screenY + boundingBox.maxY;
+    // ORIGINAL CODE (commented out for debug):
+    // final left = screenX + boundingBox.minX;
+    // final right = screenX + boundingBox.maxX;
+    // final top = screenY + boundingBox.minY;
+    // final bottom = screenY + boundingBox.maxY;
+    // return Rect.fromLTRB(left, top, right, bottom);
+
+    //START DEBUG ADJUSTMENTS - 10x bigger rectangles
+    // Original rectangle bounds
+    final originalLeft = screenX + boundingBox.minX;
+    final originalRight = screenX + boundingBox.maxX;
+    final originalTop = screenY + boundingBox.minY;
+    final originalBottom = screenY + boundingBox.maxY;
+
+    // Calculate center point
+    final centerX = (originalLeft + originalRight) / 2;
+    final centerY = (originalTop + originalBottom) / 2;
+
+    // Calculate original dimensions
+    final originalWidth = originalRight - originalLeft;
+    final originalHeight = originalBottom - originalTop;
+
+    // Make rectangle 10x bigger while keeping center position
+    final scalar = 1;
+    final newWidth = originalWidth * scalar;
+    final newHeight = originalHeight * scalar;
+
+    final left = centerX - newWidth / 2;
+    final right = centerX + newWidth / 2;
+    final top = centerY - newHeight / 2;
+    final bottom = centerY + newHeight / 2;
 
     return Rect.fromLTRB(left, top, right, bottom);
+    //END DEBUG ADJUSTMENTS
   }
 
   Future<(TextRenderData data, Texture texture)> _prepare(
