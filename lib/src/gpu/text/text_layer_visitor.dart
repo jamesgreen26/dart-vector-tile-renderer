@@ -1,6 +1,6 @@
 import 'package:flutter_scene/scene.dart';
-import 'package:vector_tile_renderer/src/gpu/color_extension.dart';
 import 'package:vector_tile_renderer/src/features/label_space.dart';
+import 'package:vector_tile_renderer/src/gpu/color_extension.dart';
 
 import '../../../vector_tile_renderer.dart';
 import '../../context.dart';
@@ -23,68 +23,6 @@ class TextLayerVisitor {
     LabelSpace labelSpace,
   ) async {
     final List<Future<bool>> futures = [];
-    for (var feature in features) {
-      final symbolLayout = style.symbolLayout;
-      if (symbolLayout == null) {
-        print("null layout, skipping");
-        return;
-      }
-
-      final evaluationContext = EvaluationContext(
-          () => feature.feature.properties,
-          TileFeatureType.none,
-          context.logger,
-          zoom: context.zoom,
-          zoomScaleFactor: 1.0,
-          hasImage: (_) => false);
-
-      final text = symbolLayout.text?.text.evaluate(evaluationContext);
-
-      double? textSize =
-          style.symbolLayout?.text?.textSize.evaluate(evaluationContext);
-
-      final point = feature.feature.modelPoints.firstOrNull ??
-          feature.feature.modelLines.map((it) {
-            return it.points[it.points.length ~/ 2];
-          }).firstOrNull;
-
-      if (point == null) {
-        continue;
-      }
-
-      if (text == null ||
-          text.isEmpty ||
-          textSize == null ||
-          alreadyAdded.contains(text)) {
-        continue;
-      }
-
-      if (point.x < 0 || point.x > 4096 || point.y < 0 || point.y > 4096) {
-        continue;
-      }
-
-      futures.add(TextBuilder(_atlasManager).addTextWithCollisionDetection(
-        text,
-        textSize.toInt() * 6,
-        point.x,
-        point.y,
-        4096,
-        graph,
-        labelSpace,
-        context.zoom,
-      ));
-
-      alreadyAdded.add(text);
-    }
-
-    final results = await Future.wait(futures);
-    final successCount = results.where((success) => success).length;
-    print(
-        "Successfully rendered $successCount out of ${results.length} text labels");
-  }
-
-  Future<void> addFeatures(Style style, Iterable<LayerFeature> features) async {
-    final List<Future<dynamic>> futures = [];
     for (var feature in features) {
       final symbolLayout = style.symbolLayout;
       if (symbolLayout == null) {
@@ -131,14 +69,27 @@ class TextLayerVisitor {
         continue;
       }
 
+      futures.add(TextBuilder(_atlasManager).addTextWithCollisionDetection(
+        text,
+        paint.color.vector4,
+        textSize.toInt() * 6,
+        1.0,
+        point.x,
+        point.y,
+        4096,
+        graph,
+        labelSpace,
+        context.zoom,
+      ));
+
       alreadyAdded.add(text);
 
-      Future<void> haloFuture;
+      Future<bool> haloFuture;
 
       if (textHalo == null) {
-        haloFuture = Future.sync(() {});
+        haloFuture = Future.value(false);
       } else {
-        haloFuture = TextBuilder(_atlasManager).addText(
+        haloFuture = TextBuilder(_atlasManager).addTextWithCollisionDetection(
             text,
             textHalo.color.vector4,
             textSize.toInt() * 6,
@@ -146,15 +97,30 @@ class TextLayerVisitor {
             point.x,
             point.y,
             4096,
-            graph);
+            graph,
+            labelSpace,
+            context.zoom);
       }
 
-      futures.add(haloFuture.then((_) {
-        TextBuilder(_atlasManager).addText(text, paint.color.vector4,
-            textSize.toInt() * 6, 1.0, point.x, point.y, 4096, graph);
+      futures.add(haloFuture.then((_) async {
+        return await TextBuilder(_atlasManager).addTextWithCollisionDetection(
+            text,
+            paint.color.vector4,
+            textSize.toInt() * 6,
+            1.0,
+            point.x,
+            point.y,
+            4096,
+            graph,
+            labelSpace,
+            context.zoom);
       }));
     }
-    await Future.wait(futures);
+
+    final results = await Future.wait(futures);
+    final successCount = results.where((success) => success).length;
+    print(
+        "Successfully rendered $successCount out of ${results.length} text labels");
   }
 
   static final _atlasManager = SdfAtlasManager();

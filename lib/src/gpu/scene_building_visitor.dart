@@ -34,7 +34,7 @@ class SceneBuildingVisitor extends LayerVisitor {
   void visitFeatures(VisitorContext context, ThemeLayerType layerType,
       Style style, Iterable<LayerFeature> features) {
     if (layerType == ThemeLayerType.symbol) {
-      TextLayerVisitor(graph, context).addFeatures(style, features);
+      TextLayerVisitor(graph, context).addFeatures(style, features, labelSpace);
     }
   }
 

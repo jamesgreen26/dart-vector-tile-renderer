@@ -39,7 +39,9 @@ class TextBuilder {
 
   Future<bool> addTextWithCollisionDetection(
     String text,
+    Vector4 color,
     int fontSize,
+    double expand,
     double x,
     double y,
     int canvasSize,
@@ -63,7 +65,7 @@ class TextBuilder {
 
     labelSpace.occupy(text, screenRect);
 
-    _addTextToScene(renderData, scene, texture);
+    _addTextToScene(renderData, scene, texture, color, expand);
     return true;
   }
 
@@ -198,40 +200,23 @@ class TextBuilder {
     );
   }
 
-  void _addTextToScene(TextRenderData data, SceneGraph scene, Texture texture) {
+  void _addTextToScene(TextRenderData data, SceneGraph scene, Texture texture,
+      Vector4 color, double expand) {
     final geom = TextGeometry(
         ByteData.sublistView(Float32List.fromList(data.vertices)),
         ByteData.sublistView(Uint16List.fromList(data.indices)),
         8);
 
-    final mat = TextMaterial(atlas.texture, 0.08, 0.75 / expand, color);
+    final mat = TextMaterial(texture, 0.08, 0.75 / expand, color);
 
     final node = Node();
 
     node.addMesh(Mesh(geom, mat));
-
-    /// force symbols in front of other layers. We do it this way to ensure that text does not get drawn underneath
-    /// layers from a neighboring tile. TODO: instead, group layers from all tiles together and draw the groups in order
     node.localTransform = node.localTransform
       ..translate(0.0, 0.0, 0.00001 * expand);
 
     scene.add(node);
   }
-}
-
-class TextRenderData {
-  final List<double> vertices;
-  final List<int> indices;
-  final BoundingBox boundingBox;
-  final double anchorX;
-  final double anchorY;
-
-  TextRenderData(
-      {required this.vertices,
-      required this.indices,
-      required this.boundingBox,
-      required this.anchorX,
-      required this.anchorY});
 }
 
 class TextRenderData {
