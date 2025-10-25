@@ -33,15 +33,13 @@ class TileId {
 class TileUiModel {
   final TileId tileId;
   final Rect position;
-  final Tileset tileset;
-  final RasterTileset rasterTileset;
+  final TileSource tileSource;
   final Uint8List? renderData;
 
   TileUiModel(
       {required this.tileId,
       required this.position,
-      required this.tileset,
-      required this.rasterTileset,
+      required this.tileSource,
       required this.renderData});
 }
 
@@ -109,7 +107,7 @@ class TilesRenderer {
         if (renderData == null) {
           throw Exception("no render data for tile ${model.tileId}, did you call preRender?");
         }
-        BucketUnpacker(_textureProvider, model.rasterTileset).unpackOnto(node, TileRenderData.unpack(renderData));
+        BucketUnpacker(_textureProvider, model.tileSource).unpackOnto(node, TileRenderData.unpack(renderData));
       }
       _positionByKey[key] = model.position;
       scene.add(node);

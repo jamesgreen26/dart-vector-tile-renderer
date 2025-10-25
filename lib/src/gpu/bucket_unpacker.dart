@@ -9,6 +9,7 @@ import 'package:vector_tile_renderer/src/gpu/text/text_material.dart';
 import 'package:vector_tile_renderer/src/gpu/texture_provider.dart';
 import 'package:vector_tile_renderer/src/tileset_raster.dart';
 
+import '../../vector_tile_renderer.dart';
 import 'background/background_geometry.dart';
 import 'colored_material.dart';
 import 'line/line_geometry.dart';
@@ -19,14 +20,31 @@ import 'tile_render_data.dart';
 class BucketUnpacker {
 
   final TextureProvider textureProvider;
-  final RasterTileset rasterTileset;
+  final TileSource tileSource;
 
-  BucketUnpacker(this.textureProvider, this.rasterTileset);
+  BucketUnpacker(this.textureProvider, this.tileSource);
 
   void unpackOnto(Node parent, TileRenderData bucket) {
     for (var packedMesh in bucket.data) {
       if (packedMesh.geometry.type == GeometryType.raster) {
-        RasterLayerBuilder().build(parent, packedMesh.geometry.uniform!, packedMesh.material.uniform!, rasterTileset);
+        RasterLayerBuilder().build(parent, packedMesh.geometry.uniform!, packedMesh.material.uniform!, tileSource.rasterTileset);
+      } else if (packedMesh.geometry.type == GeometryType.icon) {
+        final uniform = packedMesh.geometry.uniform!;
+
+        final bytes = Uint8List.fromList(uniform.buffer.asUint8List(
+          uniform.offsetInBytes,
+          uniform.lengthInBytes,
+        ));
+
+        final uint16View = bytes.buffer.asUint16List();
+        final spriteName = String.fromCharCodes(uint16View);
+
+        final sprite = tileSource.spriteIndex?.spriteByName[spriteName];
+        final atlas = tileSource.spriteAtlas;
+
+        if (sprite != null && atlas != null) {
+          print(spriteName);
+        }
       } else {
         parent.addMesh(Mesh(_unpackGeometry(packedMesh.geometry), _unpackMaterial(packedMesh.material)));
       }
@@ -45,7 +63,8 @@ enum GeometryType {
   polygon,
   background,
   raster,
-  text;
+  text,
+  icon;
 }
 
 enum MaterialType {
@@ -53,6 +72,7 @@ enum MaterialType {
   colored,
   raster,
   text,
+  icon;
 }
 
 final _geometryTypeToConstructor = {
