@@ -1,5 +1,7 @@
 import 'dart:ui';
 
+import 'package:flutter_gpu/gpu.dart';
+
 import 'themes/sprite.dart';
 import 'tileset.dart';
 import 'tileset_raster.dart';
@@ -24,5 +26,6 @@ class TileSource {
       {required this.tileset,
       this.spriteIndex,
       this.spriteAtlas,
-      this.rasterTileset = const RasterTileset(tiles: {})});
+      this.rasterTileset = const RasterTileset(tiles: {})}
+  );
 }
