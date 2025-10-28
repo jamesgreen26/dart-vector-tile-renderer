@@ -41,7 +41,7 @@ class TextBuilder {
         _spaceValidator = LabelSpaceValidator(TextLayoutCalculator(atlasSet)),
         _batchManager = BatchManager();
 
-  void addText({
+  bool addText({
     required String text,
     required int fontSize,
     required String fontFamily,
@@ -58,10 +58,10 @@ class TextBuilder {
     required LayoutAnchor anchorType,
   }) {
     final layoutResult = _calculateLayout(text, fontSize, fontFamily, maxWidth, canvasSize);
-    if (layoutResult == null) return;
+    if (layoutResult == null) return false;
 
     final geometryResult = _generateTextGeometry(layoutResult, fontFamily, color, haloColor);
-    if (geometryResult == null) return;
+    if (geometryResult == null) return false;
 
     final position = _determineTextPosition(
       line,
@@ -72,7 +72,7 @@ class TextBuilder {
       canvasSize,
       rotationAlignment,
     );
-    if (position == null) return;
+    if (position == null) return false;
 
     final validation = _validateLabelSpace(
       position,
@@ -82,7 +82,7 @@ class TextBuilder {
       isLineString,
         anchorType
     );
-    if (validation == null) return;
+    if (validation == null) return false;
 
     final transformedBatches = _transformAndFinalize(
       geometryResult,
@@ -95,6 +95,7 @@ class TextBuilder {
     );
 
     _batchManager.addBatches(transformedBatches);
+    return true;
   }
 
   _LayoutResult? _calculateLayout(
